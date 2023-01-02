@@ -1,42 +1,26 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {View, Text, Button, FlatList, StyleSheet, Image, TouchableOpacity, Platform} from "react-native";
 import {EvilIcons} from '@expo/vector-icons';
+import axios from "axios";
+import {formatDistanceToNowStrict} from "date-fns";
+import locale from 'date-fns/locale/en-US'
+import formatDistance from "../helpers/formatDistanceCustom";
 
 export default function HomeScreen({navigation}) {
-    const DATA = [
-        {
-            id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-            title: 'First Item',
-        },
-        {
-            id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-            title: 'Second Item',
-        },
-        {
-            id: '58694a0f-3da1-471f-bd96-145571e29d72',
-            title: 'Third Item',
-        },
-        {
-            id: '58694a0f-3da1-481f-bd96-145571e29d72',
-            title: 'Fourth Item',
-        },
-        {
-            id: '58694a0f-3dav-481f-bd96-145571e29d72',
-            title: 'Fifth Item',
-        },
-        {
-            id: '58694a0f-3dav-421f-bd96-145571e29d72',
-            title: 'Sixth Item',
-        },
-        {
-            id: '58694a0f-3dav-411f-bd96-145571e29d72',
-            title: 'Seventh Item',
-        },
-        {
-            id: '58694a0f-3dab-411f-bd96-145571e29d72',
-            title: 'Eighth Item',
-        },
-    ];
+    const [data,setData] = useState([]);
+
+    useEffect(() => {
+        getAllTweets();
+    },[])
+
+    function getAllTweets(){
+        axios.get('http://lc-backend-twitter.test/api/tweets').then(
+            response => {
+                setData(response.data);
+            }).catch(error => {
+                console.log(error);
+            });
+    }
 
     function gotoProfile() {
         navigation.navigate('Profile Screen');
@@ -46,7 +30,7 @@ export default function HomeScreen({navigation}) {
         navigation.navigate('Tweet Screen');
     }
 
-    const renderItem = ({item}) => (
+    const renderItem = ({item:tweet}) => (
         <View style={styles.tweetContainer}>
             <TouchableOpacity
                 onPress={
@@ -54,23 +38,29 @@ export default function HomeScreen({navigation}) {
                 }>
                 <Image style={styles.avatar}
                        source={{
-                           uri: 'https://reactnative.dev/img/tiny_logo.png'
+                           uri: tweet.user.avatar
                        }}>
                 </Image>
             </TouchableOpacity>
             <View style={{flex: 1}}>
                 <TouchableOpacity style={styles.flexRow}>
                     <Text numberOfLines={1} style={styles.tweetName}>
-                        {item.title}
+                        {tweet.user.name}
                     </Text>
-                    <Text numberOfLines={1} style={styles.tweetHandle}>@drash_nayak</Text>
+                    <Text numberOfLines={1} style={styles.tweetHandle}>@{tweet.user.username}</Text>
                     <Text>&middot;</Text>
-                    <Text numberOfLines={1} style={styles.tweetHandle}>9m</Text>
+                    <Text numberOfLines={1} style={styles.tweetHandle}>
+                        {formatDistanceToNowStrict(new Date(tweet.created_at),{
+                            locale: {
+                                ...locale,
+                                formatDistance,
+                            },
+                        })}
+                    </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.tweetContentContainer} onPress={() => gotoSingleTweet()}>
                     <Text style={styles.tweetContent}>
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquid animi consequuntur cupiditate
-                        ipsum nisi optio, qui quo rem sint veritatis!
+                        {tweet.body}
                     </Text>
                 </TouchableOpacity>
                 <View style={styles.tweetEngagement}>
@@ -98,7 +88,7 @@ export default function HomeScreen({navigation}) {
     return (
         <View style={styles.container}>
             <FlatList
-                data={DATA}
+                data={data}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 ItemSeparatorComponent={() => <View style={styles.tweetSeparator}></View>}
