@@ -1,5 +1,15 @@
 import React, {useEffect, useState} from "react";
-import {View, Text, Button, FlatList, StyleSheet, Image, TouchableOpacity, Platform} from "react-native";
+import {
+    View,
+    Text,
+    Button,
+    FlatList,
+    StyleSheet,
+    Image,
+    TouchableOpacity,
+    Platform,
+    ActivityIndicator
+} from "react-native";
 import {EvilIcons} from '@expo/vector-icons';
 import axios from "axios";
 import {formatDistanceToNowStrict} from "date-fns";
@@ -7,20 +17,33 @@ import locale from 'date-fns/locale/en-US'
 import formatDistance from "../helpers/formatDistanceCustom";
 
 export default function HomeScreen({navigation}) {
-    const [data,setData] = useState([]);
+    const [data, setData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
         getAllTweets();
-    },[])
+    }, [])
 
-    function getAllTweets(){
+    function getAllTweets() {
         axios.get('http://lc-backend-twitter.test/api/tweets').then(
             response => {
                 setData(response.data);
+                setIsLoading(false);
+                setIsRefreshing(false);
             }).catch(error => {
-                console.log(error);
-            });
+            console.log(error);
+            setIsLoading(false);
+            setIsRefreshing(false);
+        });
     }
+
+    function handleRefresh() {
+        setIsRefreshing(true);
+        getAllTweets();
+
+    }
+
 
     function gotoProfile() {
         navigation.navigate('Profile Screen');
@@ -30,7 +53,7 @@ export default function HomeScreen({navigation}) {
         navigation.navigate('Tweet Screen');
     }
 
-    const renderItem = ({item:tweet}) => (
+    const renderItem = ({item: tweet}) => (
         <View style={styles.tweetContainer}>
             <TouchableOpacity
                 onPress={
@@ -50,7 +73,7 @@ export default function HomeScreen({navigation}) {
                     <Text numberOfLines={1} style={styles.tweetHandle}>@{tweet.user.username}</Text>
                     <Text>&middot;</Text>
                     <Text numberOfLines={1} style={styles.tweetHandle}>
-                        {formatDistanceToNowStrict(new Date(tweet.created_at),{
+                        {formatDistanceToNowStrict(new Date(tweet.created_at), {
                             locale: {
                                 ...locale,
                                 formatDistance,
@@ -87,12 +110,15 @@ export default function HomeScreen({navigation}) {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={data}
-                renderItem={renderItem}
-                keyExtractor={item => item.id}
-                ItemSeparatorComponent={() => <View style={styles.tweetSeparator}></View>}
-            />
+            {isLoading ? (<ActivityIndicator style={{marginTop: 10}} size="large" color="gray"></ActivityIndicator>) : (
+                <FlatList
+                    data={data}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id.toString()}
+                    ItemSeparatorComponent={() => <View style={styles.tweetSeparator}></View>}
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                />)}
         </View>
     )
 }
