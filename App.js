@@ -89,6 +89,7 @@ export default function App() {
             }}>
                 <Drawer.Screen name="Home" component={HomeStackNavigator}/>
                 <Drawer.Screen name="Settings" component={SettingsScreen}/>
+                <Drawer.Screen name="Profile Screen" component={ProfileScreen}/>
             </Drawer.Navigator>
         </NavigationContainer>
     );
