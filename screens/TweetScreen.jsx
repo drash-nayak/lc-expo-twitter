@@ -1,62 +1,100 @@
-import React from "react";
-import {View, Text, StyleSheet, TouchableOpacity, Image, Platform} from "react-native";
+import React, {useEffect, useState} from "react";
+import {View, Text, StyleSheet, TouchableOpacity, Image, Platform, ActivityIndicator} from "react-native";
 import {Entypo} from '@expo/vector-icons';
 import {EvilIcons} from '@expo/vector-icons';
+import axiosConfig from "../helpers/axiosConfig";
+import {format} from "date-fns";
 
-export default function TweetScreen() {
+export default function TweetScreen({route, navigation}) {
+    const [tweet, setTweet] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getTweet();
+    }, []);
+
+    function getTweet() {
+        axiosConfig.get(`/tweets/${route.params.tweetId}`).then(
+            response => {
+                setTweet(response.data);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.log(error);
+                setIsLoading(false);
+            });
+    }
+
+    function gotoProfile() {
+        navigation.navigate('Profile Screen');
+    }
+
     return (
         <View style={styles.container}>
-            <View style={styles.profileContainer}>
-                <TouchableOpacity style={styles.flexRow}>
-                    <Image style={styles.avatar}
-                           source={{
-                               uri: 'https://reactnative.dev/img/tiny_logo.png'
-                           }}>
-                    </Image>
-                    <View>
-                        <Text style={styles.tweetName}>Drashtant Nayak</Text>
-                        <Text style={styles.tweetHandle}>@drash_nayak</Text>
+            {isLoading ? (
+                <ActivityIndicator style={{marginTop: 10}} size="large" color="gray"></ActivityIndicator>
+            ) : (
+                <>
+                    <View style={styles.profileContainer}>
+                        <TouchableOpacity style={styles.flexRow}
+                                          onPress={() => gotoProfile()}
+                        >
+                            <Image style={styles.avatar}
+                                   source={{
+                                       uri: tweet.user.avatar
+                                   }}>
+                            </Image>
+                            <View>
+                                <Text style={styles.tweetName}>{tweet.user.name}</Text>
+                                <Text style={styles.tweetHandle}>@{tweet.user.username}</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                            <Entypo name="dots-three-vertical" size={24} color="gray"/>
+                        </TouchableOpacity>
                     </View>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Entypo name="dots-three-vertical" size={24} color="gray"/>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.tweetContentContainer}>
-                <Text style={styles.tweetContent}>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Alias animi
-                    assumenda dignissimos dolore dolores excepturi impedit ipsam ipsum iusto laboriosam molestiae nisi,
-                    officiis pariatur perferendis placeat porro provident quibusdam quis quisquam repellendus suscipit,
-                    tenetur unde veniam, vero voluptatum? Non, perspiciatis.</Text>
-            </View>
-            <View style={styles.tweetEngagement}>
-                <View style={styles.flexRow}>
-                    <Text style={styles.tweetEngagementNumber}>628</Text>
-                    <Text style={styles.tweetEngagementLabel}>Retweets</Text>
-                </View>
-                <View style={[styles.flexRow, styles.ml4]}>
-                    <Text style={styles.tweetEngagementNumber}>38</Text>
-                    <Text style={styles.tweetEngagementLabel}>Quote Tweets</Text>
-                </View>
-                <View style={[styles.flexRow, styles.ml4]}>
-                    <Text style={styles.tweetEngagementNumber}>2,934</Text>
-                    <Text style={styles.tweetEngagementLabel}>Likes</Text>
-                </View>
-            </View>
-
-            <View style={[styles.tweetEngagement, styles.spaceAround]}>
-                <TouchableOpacity>
-                    <EvilIcons name="comment" size={32} color="gray"/>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <EvilIcons name="retweet" size={32} color="gray"/>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <EvilIcons name="heart" size={32} color="gray"/>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <EvilIcons name={Platform.OS === 'ios' ? 'share-apple' : 'share-google'} size={32} color="gray"/>
-                </TouchableOpacity>
-            </View>
+                    <View style={styles.tweetContentContainer}>
+                        <Text style={styles.tweetContent}>{tweet.body}</Text>
+                    </View>
+                    <View style={styles.tweetTimestampContainer}>
+                        <Text style={styles.tweetTimestampText}>{format(new Date(tweet.created_at), 'h:mm a')}</Text>
+                        <Text style={styles.tweetTimestampText}>&middot;</Text>
+                        <Text style={styles.tweetTimestampText}>{format(new Date(tweet.created_at), 'd MMM.yy')}</Text>
+                        <Text style={styles.tweetTimestampText}>&middot;</Text>
+                        <Text style={[styles.tweetTimestampText, styles.linkColor]}>
+                            Tweeter for iphone
+                        </Text>
+                    </View>
+                    <View style={styles.tweetEngagement}>
+                        <View style={styles.flexRow}>
+                            <Text style={styles.tweetEngagementNumber}>628</Text>
+                            <Text style={styles.tweetEngagementLabel}>Retweets</Text>
+                        </View>
+                        <View style={[styles.flexRow, styles.ml4]}>
+                            <Text style={styles.tweetEngagementNumber}>38</Text>
+                            <Text style={styles.tweetEngagementLabel}>Quote Tweets</Text>
+                        </View>
+                        <View style={[styles.flexRow, styles.ml4]}>
+                            <Text style={styles.tweetEngagementNumber}>2,934</Text>
+                            <Text style={styles.tweetEngagementLabel}>Likes</Text>
+                        </View>
+                    </View>
+                    <View style={[styles.tweetEngagement, styles.spaceAround]}>
+                        <TouchableOpacity>
+                            <EvilIcons name="comment" size={32} color="gray"/>
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                            <EvilIcons name="retweet" size={32} color="gray"/>
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                            <EvilIcons name="heart" size={32} color="gray"/>
+                        </TouchableOpacity>
+                        <TouchableOpacity>
+                            <EvilIcons name={Platform.OS === 'ios' ? 'share-apple' : 'share-google'} size={32}
+                                       color="gray"/>
+                        </TouchableOpacity>
+                    </View>
+                </>)}
         </View>
     )
 }
@@ -122,5 +160,17 @@ const styles = StyleSheet.create({
     },
     ml4: {
         marginLeft: 16
+    },
+    tweetTimestampContainer: {
+        flexDirection: 'row',
+        marginTop: 12,
+        paddingHorizontal: 10,
+    },
+    tweetTimestampText: {
+        color: 'gray',
+        marginRight: 6
+    },
+    linkColor: {
+        color: '#1d9bf1'
     }
 });

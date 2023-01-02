@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import {
     View,
     Text,
-    Button,
     FlatList,
     StyleSheet,
     Image,
@@ -11,7 +10,7 @@ import {
     ActivityIndicator
 } from "react-native";
 import {EvilIcons} from '@expo/vector-icons';
-import axios from "axios";
+import axiosConfig from "../helpers/axiosConfig";
 import {formatDistanceToNowStrict} from "date-fns";
 import locale from 'date-fns/locale/en-US'
 import formatDistance from "../helpers/formatDistanceCustom";
@@ -28,7 +27,7 @@ export default function HomeScreen({navigation}) {
     }, [page]);
 
     function getAllTweets() {
-        axios.get(`http://lc-backend-twitter.test/api/tweets?page=${page}`).then(
+        axiosConfig.get(`/tweets?page=${page}`).then(
             response => {
                 if (page === 1) {
                     setData(response.data.data);
@@ -60,20 +59,16 @@ export default function HomeScreen({navigation}) {
         setPage(page + 1);
     }
 
-    function gotoProfile() {
-        navigation.navigate('Profile Screen');
-    }
-
-    function gotoSingleTweet() {
-        navigation.navigate('Tweet Screen');
+    function gotoSingleTweet(tweetId) {
+        navigation.navigate('Tweet Screen',{
+            tweetId: tweetId
+        });
     }
 
     const renderItem = ({item: tweet}) => (
         <View style={styles.tweetContainer}>
             <TouchableOpacity
-                onPress={
-                    () => gotoSingleTweet()
-                }>
+                onPress={() => gotoSingleTweet(tweet.id)}>
                 <Image style={styles.avatar}
                        source={{
                            uri: tweet.user.avatar
@@ -96,7 +91,7 @@ export default function HomeScreen({navigation}) {
                         })}
                     </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.tweetContentContainer} onPress={() => gotoSingleTweet()}>
+                <TouchableOpacity style={styles.tweetContentContainer} onPress={() => gotoSingleTweet(tweet.id)}>
                     <Text style={styles.tweetContent}>
                         {tweet.body}
                     </Text>
