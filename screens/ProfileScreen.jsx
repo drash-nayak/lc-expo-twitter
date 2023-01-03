@@ -3,14 +3,21 @@ import {View, Text, StyleSheet, Image, TouchableOpacity, Linking, FlatList, Acti
 import {EvilIcons} from "@expo/vector-icons";
 import axiosConfig from "../helpers/axiosConfig";
 import {format} from "date-fns";
+import RenderItem from "../components/RenderItem";
 
 export default function ProfileScreen({route, navigation}) {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState([]);
+    const [page, setPage] = useState(1);
+    const [isAtEndOfScrolling, setIsAtEndOfScrolling] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isLoadingTweets, setIsLoadingTweets] = useState(true);
 
     useEffect(() => {
         getUserProfile();
-    }, []);
+        getUserTweets();
+    }, [page]);
 
     function getUserProfile() {
         axiosConfig(`/users/${route.params.userId}`)
@@ -22,6 +29,39 @@ export default function ProfileScreen({route, navigation}) {
                 console.log(error);
                 setIsLoading(false);
             });
+    }
+
+    function handleRefresh() {
+        setPage(1);
+        setIsAtEndOfScrolling(false);
+        setIsRefreshing(true);
+        getUserTweets();
+    }
+
+    function handleEnd() {
+        setPage(page + 1);
+    }
+
+    function getUserTweets() {
+        axiosConfig.get(`/users/${route.params.userId}/tweets?page=${page}`).then(
+            response => {
+                if (page === 1) {
+                    setData(response.data.data);
+                } else {
+                    setData([...data, ...response.data.data]);
+                }
+
+                if (!response.data.next_page_url) {
+                    setIsAtEndOfScrolling(true);
+                }
+
+                setIsLoadingTweets(false);
+                setIsRefreshing(false);
+            }).catch(error => {
+            console.log(error);
+            setIsLoadingTweets(false);
+            setIsRefreshing(false);
+        });
     }
 
     const header = () => (
@@ -86,55 +126,25 @@ export default function ProfileScreen({route, navigation}) {
         </View>
     )
 
-    const DATA = [
-        {
-            id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-            title: 'First Item',
-        },
-        {
-            id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-            title: 'Second Item',
-        },
-        {
-            id: '58694a0f-3da1-471f-bd96-145571e29d72',
-            title: 'Third Item',
-        },
-        {
-            id: '58694a0f-3da1-481f-bd96-145571e29d72',
-            title: 'Fourth Item',
-        },
-        {
-            id: '58694a0f-3dav-481f-bd96-145571e29d72',
-            title: 'Fifth Item',
-        },
-        {
-            id: '58694a0f-3dav-421f-bd96-145571e29d72',
-            title: 'Sixth Item',
-        },
-        {
-            id: '58694a0f-3dav-411f-bd96-145571e29d72',
-            title: 'Seventh Item',
-        },
-        {
-            id: '58694a0f-3dab-411f-bd96-145571e29d72',
-            title: 'Eighth Item',
-        },
-    ];
-
-    const renderItem = ({item}) => (
-        <View>
-            <Text style={{width: 800, marginHorizontal: 10, marginVertical: 10}}>{item.title}</Text>
-        </View>
-    );
-
     return (
-        <FlatList data={DATA}
-                  style={styles.container}
-                  renderItem={renderItem}
-                  keyExtractor={item => item.id}
-                  ItemSeparatorComponent={() => <View style={styles.separator}></View>}
-                  ListHeaderComponent={header}
-        ></FlatList>
+        <View style={styles.container}>
+            {isLoadingTweets ? (
+                <ActivityIndicator style={{marginTop: 10}} size="large" color="gray"></ActivityIndicator>) : (
+                <FlatList
+                    data={data}
+                    renderItem={props => <RenderItem {...props} />}
+                    keyExtractor={item => item.id.toString()}
+                    ItemSeparatorComponent={() => <View style={styles.separator}></View>}
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    onEndReached={handleEnd}
+                    onEndReachedThreshold={0.2}
+                    initialNumToRender={10}
+                    ListHeaderComponent={header}
+                    ListFooterComponent={() => !isAtEndOfScrolling && (<ActivityIndicator size="large" color="gray"/>)}
+                    scrollIndicatorInsets={{right: 1}}
+                />)}
+        </View>
     )
 }
 
@@ -228,6 +238,6 @@ const styles = StyleSheet.create({
     },
     separator: {
         borderBottomWidth: 1,
-        borderBottomColor: 'gray'
+        borderBottomColor: '#e5e7eb'
     }
 })
