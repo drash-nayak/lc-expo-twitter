@@ -1,66 +1,88 @@
-import React from "react";
-import {View, Text, StyleSheet, Image, TouchableOpacity, Linking, FlatList} from "react-native";
+import React, {useEffect, useState} from "react";
+import {View, Text, StyleSheet, Image, TouchableOpacity, Linking, FlatList, ActivityIndicator} from "react-native";
 import {EvilIcons} from "@expo/vector-icons";
+import axiosConfig from "../helpers/axiosConfig";
+import {format} from "date-fns";
 
-export default function ProfileScreen() {
+export default function ProfileScreen({route, navigation}) {
+    const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getUserProfile();
+    }, []);
+
+    function getUserProfile() {
+        axiosConfig(`/users/${route.params.userId}`)
+            .then(response => {
+                setUser(response.data);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.log(error);
+                setIsLoading(false);
+            });
+    }
 
     const header = () => (
         <View style={styles.container}>
-            <Image style={styles.backgroundImage}
-                   source={{
-                       uri: 'https://images.unsplash.com/photo-1615097130643-12caeab3c625?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3570&q=80'
-                   }}>
-            </Image>
-            <View style={styles.avatarContainer}>
-                <Image style={styles.avatar}
+            {isLoading ? (
+                <ActivityIndicator style={{marginTop: 10}} size="large" color="gray"></ActivityIndicator>) : (<>
+                <Image style={styles.backgroundImage}
                        source={{
-                           uri: 'https://reactnative.dev/img/tiny_logo.png'
+                           uri: 'https://images.unsplash.com/photo-1615097130643-12caeab3c625?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3570&q=80'
                        }}>
                 </Image>
-                <TouchableOpacity style={styles.followButton}>
-                    <Text style={styles.followButtonText}>Follow</Text>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.nameContainer}>
-                <Text style={styles.profileName}>Drashtant Nayak</Text>
-                <Text style={styles.profileHandle}>@drash_nayak</Text>
-            </View>
-            <View style={styles.profileContainer}>
-                <Text style={styles.profileContainerText}>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Adipisci eius est impedit natus officia
-                    quasi tempore tenetur veritatis voluptatum. Suscipit.
-                </Text>
-            </View>
-            <View style={styles.locationContainer}>
-                <EvilIcons name="location" size={24} color="gray"/>
-                <Text style={styles.textGray}>Calgary, Alberta</Text>
-            </View>
-            <View style={styles.linkContainer}>
-                <TouchableOpacity
-                    style={styles.linkItem}
-                    onPress={
-                        () => Linking.openURL('https://laracasts.com')
-                    }
-                >
-                    <EvilIcons name="link" size={24} color="gray"/>
-                    <Text style={styles.linkColor}>Laracasts.com</Text>
-                </TouchableOpacity>
-                <View style={[styles.linkItem, styles.ml4]}>
-                    <EvilIcons name="calendar" size={24} color="gray"/>
-                    <Text style={styles.textGray}>Joined March 2008</Text>
+                <View style={styles.avatarContainer}>
+                    <Image style={styles.avatar}
+                           source={{
+                               uri: user.avatar
+                           }}>
+                    </Image>
+                    <TouchableOpacity style={styles.followButton}>
+                        <Text style={styles.followButtonText}>Follow</Text>
+                    </TouchableOpacity>
                 </View>
-            </View>
-            <View style={styles.followContainer}>
-                <View style={styles.followItem}>
-                    <Text style={styles.followItemNumber}>599</Text>
-                    <Text style={styles.followItemLabel}>Following</Text>
+                <View style={styles.nameContainer}>
+                    <Text style={styles.profileName}>{user.name}</Text>
+                    <Text style={styles.profileHandle}>@{user.username}</Text>
                 </View>
-                <View style={[styles.followItem, styles.ml4]}>
-                    <Text style={styles.followItemNumber}>2,354</Text>
-                    <Text style={styles.followItemLabel}>Followers</Text>
+                <View style={styles.profileContainer}>
+                    <Text style={styles.profileContainerText}>
+                        {user.profile}
+                    </Text>
                 </View>
-            </View>
-            <View style={styles.separator}></View>
+                <View style={styles.locationContainer}>
+                    <EvilIcons name="location" size={24} color="gray"/>
+                    <Text style={styles.textGray}>{user.location}</Text>
+                </View>
+                <View style={styles.linkContainer}>
+                    <TouchableOpacity
+                        style={styles.linkItem}
+                        onPress={
+                            () => Linking.openURL(user.link)
+                        }
+                    >
+                        <EvilIcons name="link" size={24} color="gray"/>
+                        <Text style={styles.linkColor}>{user.link_text}</Text>
+                    </TouchableOpacity>
+                    <View style={[styles.linkItem, styles.ml4]}>
+                        <EvilIcons name="calendar" size={24} color="gray"/>
+                        <Text style={styles.textGray}>Joined {format(new Date(user.created_at), 'MMM, yyyy')}</Text>
+                    </View>
+                </View>
+                <View style={styles.followContainer}>
+                    <View style={styles.followItem}>
+                        <Text style={styles.followItemNumber}>599</Text>
+                        <Text style={styles.followItemLabel}>Following</Text>
+                    </View>
+                    <View style={[styles.followItem, styles.ml4]}>
+                        <Text style={styles.followItemNumber}>2,354</Text>
+                        <Text style={styles.followItemLabel}>Followers</Text>
+                    </View>
+                </View>
+                <View style={styles.separator}></View>
+            </>)}
         </View>
     )
 
