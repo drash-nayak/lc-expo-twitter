@@ -3,9 +3,10 @@ import {
     View,
     FlatList,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator, TouchableOpacity
 } from "react-native";
 import axiosConfig from "../helpers/axiosConfig";
+import { AntDesign } from '@expo/vector-icons';
 
 import RenderItem from "../components/RenderItem";
 
@@ -50,6 +51,10 @@ export default function HomeScreen({navigation}) {
         getAllTweets();
     }
 
+    function gotoNewTweet(){
+        navigation.navigate('New Tweet Screen');
+    }
+
     function handleEnd() {
         setPage(page + 1);
     }
@@ -70,6 +75,16 @@ export default function HomeScreen({navigation}) {
                     initialNumToRender={10}
                     ListFooterComponent={() => !isAtEndOfScrolling && (<ActivityIndicator size="large" color="gray"/>)}
                 />)}
+            <TouchableOpacity
+                style={styles.floatingButton}
+                onPress={() => gotoNewTweet()}
+            >
+                <AntDesign
+                    name="plus"
+                    size={26}
+                    color="white"
+                />
+            </TouchableOpacity>
         </View>
     )
 }
@@ -83,4 +98,15 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb'
     },
+    floatingButton:{
+        width:60,
+        height:60,
+        borderRadius:30,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor:'#1d9bf1',
+        position:'absolute',
+        bottom:20,
+        right:12
+    }
 })
