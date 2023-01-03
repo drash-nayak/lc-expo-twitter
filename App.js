@@ -29,7 +29,7 @@ const HomeStackNavigator = () => {
             <Stack.Screen name="Tab" component={TabNavigator}
                           options={{headerShown: false}}
             ></Stack.Screen>
-            <Stack.Screen name="New Tweet"
+            <Stack.Screen name="New Tweet Screen"
                           component={NewTweetScreen}
                           options={{
                               title: ""
